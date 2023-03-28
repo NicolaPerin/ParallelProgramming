@@ -19,12 +19,17 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    double computation, communication, time1, time2, time3;
     double *A, *B, *C, *B_col; // declare the three matrices + the receive buffer
 
     n_loc = N / world_size; // ex: 10 / 4 = 2
     rest = N % world_size; // ex: 10 % 4 = 2
 
     if (rank == 0) { printf("\nN: %d, world_size: %d, n_loc: %d, rest: %d\n", N, world_size, n_loc, rest); }
+
+#ifdef USE_BLAS
+    if (rank == 0) printf("USING DGEMM!\n");
+#endif
 
     row_counts = (int *) malloc( world_size * sizeof(int) );
     init_row_counts(row_counts, n_loc, rest, rank, world_size); // ex: 3 3 2 2
@@ -50,30 +55,34 @@ int main(int argc, char** argv) {
     for (int p = 0; p < world_size; p++) {
         init_elem_counts(elem_counts, row_counts, p, world_size); // Must change with p, not the rank!!!
         init_displ_B_col(displ_B_col, elem_counts, world_size); // Same
-        
+
+        MPI_Barrier(MPI_COMM_WORLD); // Force syncronization
+        time1 = MPI_Wtime();
+
         MPI_Datatype my_block;
         MPI_Type_vector(row_counts[rank], row_counts[p], N, MPI_DOUBLE, &my_block);
         MPI_Type_commit(&my_block);
         MPI_Allgatherv(B + displ_B[p], 1, my_block, B_col, elem_counts, displ_B_col, MPI_DOUBLE, MPI_COMM_WORLD);
         MPI_Type_free(&my_block);
 
+        MPI_Barrier(MPI_COMM_WORLD);
+        time2 = MPI_Wtime();
+
 #ifdef USE_BLAS
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, row_counts[rank], 
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, row_counts[rank],
                     row_counts[p], N, 1.0, A, N, B_col, row_counts[p], 0.0, C + displ_B[p], N);
 #else
         matrixMultiply(C, A, B_col, row_counts, displ_B, rank, p, N); // Finally
 #endif
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        time3 = MPI_Wtime();
+
+        communication += time2 - time1;
+        computation += time3 - time2;
     }
 
-    // Print the final matrix
-    if (rank == 0) {
-        printf("\nC\n");
-        printMatrix(C, row_counts[rank], N);
-        for (int count = 1; count < world_size; count++) {
-            MPI_Recv(C, row_counts[count] * N, MPI_DOUBLE, count, count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            printMatrix(C, row_counts[count], N);
-        }
-    } else MPI_Send(C, row_counts[rank] * N, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
+    if (rank == 0) printf("%.5g %.5g\n", communication, computation);
 
     free(A); free(B); free(C); free(B_col);
     free(row_counts); free(displ_B); free(elem_counts); free(displ_B_col);
@@ -81,3 +90,12 @@ int main(int argc, char** argv) {
     MPI_Finalize();
     return 0;
 }
+/*// Print the final matrix
+    if (rank == 0) {
+        printf("\nC\n");
+        printMatrix(C, row_counts[rank], N);
+        for (int count = 1; count < world_size; count++) {
+            MPI_Recv(C, row_counts[count] * N, MPI_DOUBLE, count, count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printMatrix(C, row_counts[count], N);
+        }
+    } else MPI_Send(C, row_counts[rank] * N, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);*/
