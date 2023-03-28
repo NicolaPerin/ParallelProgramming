@@ -1,18 +1,28 @@
-CC = mpicc
-CFLAGS = -O3
-ifdef USE_BLAS
-CFLAGS += -DUSE_BLAS
-LIBS = -lblas
+CC=mpicc
+
+CFLAGS=-Wall -O3
+
+OPENBLAS=${OPENBLAS_HOME}
+
+TARGET=prod.x
+
+SOURCES=MPI_MAT_MUL.c utility.c
+
+OBJECTS=$(SOURCES:.c=.o)
+
+ifeq ($(USE_BLAS),1)
+    LDFLAGS=-DUSE_BLAS -I $(OPENBLAS)/include/ -L $(OPENBLAS)/lib -lopenblas
+else
+    LDFLAGS=-I $(OPENBLAS)/include/ -L $(OPENBLAS)/lib -lopenblas
 endif
 
-MPI_MAT_MUL: MPI_MAT_MUL.o utility.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+all: $(TARGET)
 
-MPI_MAT_MUL.o: MPI_MAT_MUL.c
-	$(CC) $(CFLAGS) -c $<
+%.o: %.c
+        $(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
 
-utilities.o: utility.c utility.h
-	$(CC) $(CFLAGS) -c $<
+$(TARGET): $(OBJECTS)
+        $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 clean:
-	rm -f MPI_MAT_MUL MPI_MAT_MUL.o utility.o
+        rm -f $(OBJECTS) $(TARGET)
