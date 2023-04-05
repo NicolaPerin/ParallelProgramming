@@ -21,8 +21,8 @@ void gpu_computation(const int rank, const int p, const int n_loc, const int N, 
     cudaMemcpy(d_B_col, B_col, N * (n_loc + 1) * sizeof(double), cudaMemcpyHostToDevice);
     // cublas multiplication
     const double alpha = 1, beta = 0; // lmao why do i have to do this
-    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, row_counts[rank], row_counts[p], N,
-                &alpha, d_A, N, d_B_col, row_counts[p], &beta, d_C + displ_B[p], N);
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, row_counts[p], row_counts[rank], N,
+                &alpha, d_B_col, row_counts[p], d_A, N, &beta, d_C + displ_B[p], N);
     // Copy C from device to host memory
     cudaMemcpy(C, d_C, row_counts[rank] * N * sizeof(double), cudaMemcpyDeviceToHost);
 
