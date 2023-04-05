@@ -47,15 +47,16 @@ int main(int argc, char** argv) {
     // Our block of columns of B has to be large enough to store the larger blocks -> N * (n_loc + 1)
     B_col = (double *) malloc( N * (n_loc + 1) * sizeof(double) );
 
-#ifdef USE_GPU
-    double *d_A, *d_B_col, *d_C;
-    gpu_initialization(row_counts, n_loc, rank, N, d_A, d_B_col, d_C);
-#endif
-
     // Initalization of the matrices
     init_A( A, row_counts[rank], N, rank, rest ); // Increasing integer numbers
     init_B( B, row_counts[rank], N, rank, rest ); // Identity
     memset( C, 0, row_counts[rank] * N * sizeof(double) ); // Zero
+
+#ifdef USE_GPU
+    double *d_A, *d_B_col, *d_C;
+    cublasHandle_t handle;
+    gpu_initialization(row_counts, n_loc, rank, N, A, d_A, d_B_col, d_C, handle);
+#endif
 
     displ_B = (int *) malloc( world_size * sizeof(int) );
     init_displ_B(displ_B, row_counts, rank, world_size); // ex: 0 3 6 8
@@ -78,7 +79,7 @@ int main(int argc, char** argv) {
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, row_counts[rank],
                     row_counts[p], N, 1.0, A, N, B_col, row_counts[p], 0.0, C + displ_B[p], N);
 #elif USE_GPU
-        gpu_computation(rank, p, n_loc, N, row_counts, displ_B, A, B_col, C, d_A, d_B_col, d_C);
+        gpu_computation(rank, p, n_loc, N, row_counts, displ_B, A, B_col, C, d_A, d_B_col, d_C, handle);
 #else
         matrixMultiply(C, A, B_col, row_counts, displ_B, rank, p, N); // Finally
 #endif
@@ -89,6 +90,13 @@ int main(int argc, char** argv) {
         communication += time2 - time1;
         computation += time3 - time2;
     }
+
+#ifdef USE_GPU
+    // Copy C from device to host memory
+    cudaMemcpy(C, d_C, row_counts[rank] * N * sizeof(double), cudaMemcpyDeviceToHost);
+    cublasDestroy(handle);
+    cudaFree(d_A); cudaFree(d_B_col); cudaFree(d_C);
+#endif
 
     if (rank == 0) printf("%.5g %.5g\n", communication, computation);
 
