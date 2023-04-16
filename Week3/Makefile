@@ -10,11 +10,11 @@ TARGET=prod.x
 SOURCES=MPI_MAT_MUL.c utility.c
 OBJECTS=$(SOURCES:.c=.o)
 
-ifeq ($(USE_CBLAS),1)
+ifeq ($(dgemm),1)
     LDFLAGS=-DUSE_CBLAS -I $(OPENBLAS)/include/ -L $(OPENBLAS)/lib -lopenblas
 endif
 
-ifeq ($(USE_GPU),1)
+ifeq ($(gpu),1)
     LDFLAGS+=-DUSE_GPU
     OBJECTS+=gpu.o
     LDLIBS+=-L${CUDA_HOME}/lib64/ -lcudart -lcublas
@@ -32,4 +32,4 @@ $(TARGET): $(OBJECTS)
         $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LDLIBS)
 
 clean:
-        rm -f $(OBJECTS) $(TARGET)
+        rm -f $(OBJECTS) $(TARGET) gpu.o
