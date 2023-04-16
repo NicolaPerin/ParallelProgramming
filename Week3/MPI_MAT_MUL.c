@@ -53,9 +53,11 @@ int main(int argc, char** argv) {
     memset( C, 0, row_counts[rank] * N * sizeof(double) ); // Zero
 
 #ifdef USE_GPU
-    double *d_A, *d_B_col, *d_C;
+    cudaSetDevice(rank);
     cublasHandle_t handle;
-    gpu_initialization(row_counts, n_loc, rank, N, A, d_A, d_B_col, d_C, handle);
+    cublasCreate(&handle);
+    double *d_A, *d_B_col, *d_C;
+    alloc(row_counts, n_loc, rank, N, A, &d_A, &d_B_col, &d_C); // Allocation and copy of A to d_A
 #endif
 
     displ_B = (int *) malloc( world_size * sizeof(int) );
@@ -93,12 +95,23 @@ int main(int argc, char** argv) {
 
 #ifdef USE_GPU
     // Copy C from device to host memory
-    cudaMemcpy(C, d_C, row_counts[rank] * N * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaError_t err3 = cudaMemcpy(C, d_C, row_counts[rank] * N * sizeof(double), cudaMemcpyDeviceToHost);
+    if (err3 != cudaSuccess) printf("Error on copying A to d_A: %s\n", cudaGetErrorString(err3));
     cublasDestroy(handle);
     cudaFree(d_A); cudaFree(d_B_col); cudaFree(d_C);
 #endif
 
     if (rank == 0) printf("%.5g %.5g\n", communication, computation);
+
+    // Print the final matrix
+    if (rank == 0) {
+        printf("\nC\n");
+        printMatrix(C, row_counts[rank], N);
+        for (int count = 1; count < world_size; count++) {
+            MPI_Recv(C, row_counts[count] * N, MPI_DOUBLE, count, count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printMatrix(C, row_counts[count], N);
+        }
+    } else MPI_Send(C, row_counts[rank] * N, MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
 
     free(A); free(B); free(C); free(B_col);
     free(row_counts); free(displ_B); free(elem_counts); free(displ_B_col);
