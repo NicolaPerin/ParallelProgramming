@@ -3,7 +3,12 @@
 #include <cublas_v2.h>
 
 void alloc(const int* row_counts, const int n_loc, const int rank, const int N, const double *A,
-                        double **d_A, double **d_B_col, double **d_C) {
+                        double **d_A, double **d_B_col, double **d_C, cublasHandle_t *handle) {
+
+    int n_of_gpus;
+    cudaGetDeviceCount(&n_of_gpus);
+    cudaSetDevice(rank % n_of_gpus);
+    cublasCreate(handle);
     // Allocate memory on the device
     cudaMalloc( (void **)d_A, row_counts[rank] * N * sizeof(double) );
     cudaError_t err = cudaMalloc((void **)d_B_col, N * (n_loc + 1) * sizeof(double));
@@ -16,7 +21,7 @@ void alloc(const int* row_counts, const int n_loc, const int rank, const int N, 
 
 void gpu_computation(const int rank, const int p, const int n_loc, const int N, const int *row_counts,
                      const int *displ_B, const double *A, const double *B_col, double *C, double *d_A,
-                     double* d_B_col, double *d_C, cublasHandle_t handle) {
+                     double* d_B_col, double *d_C, cublasHandle_t handle, float *elapsedTime) {
 
     if (B_col == NULL) printf("B_col pointer is null\n");
     if (d_B_col == NULL) printf("d_B_col pointer is null\n");
@@ -25,5 +30,15 @@ void gpu_computation(const int rank, const int p, const int n_loc, const int N, 
     if (err2 != cudaSuccess) { printf("Error on copying B_col to d_B_col: %s\n", cudaGetErrorString(err2)); }
     // cublas multiplication
     const double alpha = 1.0, beta = 0.0;
+    // Measure the computation time
+    cudaEvent_t start, stop;
+    float time;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, row_counts[p], row_counts[rank], N, &alpha, d_B_col, row_counts[p], d_A, N, &beta, d_C + displ_B[p], N);
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&time, start, stop);
+    *elapsedTime += time;
 }
