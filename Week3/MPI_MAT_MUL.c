@@ -105,6 +105,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef USE_CBLAS
+    if (rank == 0) printf("Communication time %.5g\nComputation time %.5g\n", communication, computation);
     // Append the profiling data in a file
     if (rank == 0) {
     FILE *fp = fopen("dgemm_scalability.txt", "a");
