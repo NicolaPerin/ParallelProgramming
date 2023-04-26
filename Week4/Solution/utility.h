@@ -5,7 +5,12 @@
 #include <sys/time.h>
 #include <mpi.h>
 
+void yellow( void );
+void reset( void );
+
 void save_gnuplot( double *, const int, const int ); // save matrix to file
+
+void exchangeRows(double*, const int*, const int, const int, const int, const int);
 
 void evolve( const double*, double*, const int*, const int, const int); // evolve Jacobi
 
