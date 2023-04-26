@@ -7,9 +7,11 @@
 
 void save_gnuplot( double *, const int, const int ); // save matrix to file
 
-void evolve( double *, double *, int); // evolve Jacobi
+void evolve( const double*, double*, const int*, const int, const int); // evolve Jacobi
 
-double seconds( void ); // return the elapsed
+double seconds( void ); // return the elapsed time
+
+void initCounts(const int, const int, const int, int*, int*);
 
 void initMatrix(const int, const int, const int, const int*, const int*, double*);
 
