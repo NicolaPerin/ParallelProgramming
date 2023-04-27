@@ -1,7 +1,14 @@
 #include "utility.h"
 
-void yellow() { printf("\033[1;33m"); }
-void reset() { printf("\033[0m"); }
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+
+void reset() { printf(RESET); }
+void red() { printf(RED); }
+void green() { printf(GREEN); }
+void yellow() { printf(YELLOW); }
 
 void evolve( const double* matrix, double* matrix_new, const int* rows, const int rank, const int N) {
   //This will be a row dominant program.
@@ -14,28 +21,40 @@ void evolve( const double* matrix, double* matrix_new, const int* rows, const in
           matrix[ ( i * ( N + 2 ) ) + ( j - 1 ) ] );
 }
 
-void save_gnuplot( double* M, const int N, const int rank ) {
-
-  if (rank == 0) {
+void save_gnuplot(double *M, const int N, const int rank, const int wsz, const int* counts, const int* displs) {
     const double h = 0.1;
-    FILE *file;
-    file = fopen( "solution.dat", "w" );
+    MPI_File file;
+    MPI_Status status;
+    // open shared file
+    MPI_File_open(MPI_COMM_WORLD, "solution.dat", MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+    // calculate offset for each process
+    int num_elements = counts[rank] * N;
+    int bufsize = num_elements * 50; // estimate size of buffer
+    char *buf = (char *) malloc( bufsize );
+    int index = 0;
+    for (int i = 0; i < counts[rank]; i++) {
+        for (int j = 0; j < N; j++) {
+            int row = i + displs[rank];
+            index += sprintf(&buf[index], "%f\t%f\t%f\n", h * j, -h * row, M[i * N + j]);
+        }
+    }
 
-    for (int i = 0; i < N + 2; i++)
-      for (int j = 0; j < N + 2; j++)
-        fprintf(file, "%f\t%f\t%f\n", h * j, -h * i, M[ ( i * ( N + 2 ) ) + j ] );
+    // calculate offset for each process
+    int *counts2 = (int *)malloc(wsz * sizeof(int));
+    int *displs2 = (int *)malloc(wsz * sizeof(int));
+    MPI_Allgather(&index, 1, MPI_INT, counts2, 1, MPI_INT, MPI_COMM_WORLD);
+    displs2[0] = 0;
+    for (int i = 1; i < wsz; i++) {
+        displs2[i] = displs2[i - 1] + counts2[i - 1];
+    }
 
-    fclose( file );
-  }
-}
+    // write data to file
+    MPI_File_write_at_all(file, displs2[rank], buf, index, MPI_CHAR, &status);
+    MPI_File_close(&file);
 
-// A Simple timer for measuring the walltime
-double seconds() {
-    struct timeval tmp;
-    double sec;
-    gettimeofday( &tmp, (struct timezone *)0 );
-    sec = tmp.tv_sec + ((double)tmp.tv_usec) / 1000000.0;
-    return sec;
+    free(buf);
+    free(counts2);
+    free(displs2);
 }
 
 void initCounts(const int n_loc, const int wsz, const int rest, int* rows, int* offset) {
