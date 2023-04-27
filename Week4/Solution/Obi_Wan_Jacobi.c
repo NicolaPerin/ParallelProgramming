@@ -13,13 +13,15 @@ int main(int argc, char* argv[]) {
 
   // check on input parameters
   if(argc != 4) {
-    fprintf(stderr,"\nwrong number of arguments. Usage: ./a.out dim it n m\n");
+    if (rank == 0) {
+      red(); printf("\nWrong number of arguments.\nUsage: mpirun -np <number of processes> jacobi.x <dim> <iterations> <print>\n"); reset();
+    }
     return 1;
   }
 
   N = atoi(argv[1]); // 9
   iterations = atoi(argv[2]);
-  print = atoi(argv[3]);
+  print = atoi(argv[3]); // 0 doesn't print, > 0 prints
 
   int n_loc = N / wsz;
   int rest = N % wsz;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[]) {
     printf("N (int): %d\nN (ext): %d\nn_loc: %d\nrest: %d\n", N, N + 2, n_loc, rest);
     printf("rows, offset\n");
     for (int i = 0; i < wsz; i++) printf("%d %d\n", rows[i], offset[i]);
-    printf("\nnumber of iterations = %d\n", iterations);
+    printf("number of iterations = %d\n", iterations);
     // printf("element for checking = Mat[%d,%d]\n",row_peek, col_peek);
   }
 
@@ -51,10 +53,12 @@ int main(int argc, char* argv[]) {
 
   for (int it = 0; it < iterations; it++) {
     exchangeRows(matrix, rows, N, rank, above, below);
+
     t_evolve_start = MPI_Wtime();
     evolve( matrix, matrix_new, rows, rank, N );
     t_evolve_end = MPI_Wtime();
     t_evolve += t_evolve_end - t_evolve_start;
+
     // swap the pointers
     tmp_matrix = matrix;
     matrix = matrix_new;
@@ -65,10 +69,16 @@ int main(int argc, char* argv[]) {
   t_end = MPI_Wtime();
   t_elapsed = t_end - t_start;
 
-  if (rank == 0) printf("\nEvolve time = %f seconds\n", t_evolve);
-  if (rank == 0) printf("Total elapsed time = %f seconds\n", t_elapsed);
+  t_start = MPI_Wtime();
+  save_gnuplot(matrix, N+2, rank, wsz, rows, offset);
+  MPI_Barrier(MPI_COMM_WORLD);
+  t_end = MPI_Wtime();
 
-  //save_gnuplot( matrix, N );
+  if (rank == 0) {
+    printf("\nComputation time: %f s\n", t_evolve);
+    printf("Communication time: %f seconds\n", t_elapsed - t_evolve);
+    printf("Writing time: %f s\n", t_end - t_start);
+  }
 
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix_new); // Send to process zero to be printed
 
