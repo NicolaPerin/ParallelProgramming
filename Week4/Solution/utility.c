@@ -21,20 +21,20 @@ void evolve( const double* matrix, double* matrix_new, const int* rows, const in
           matrix[ ( i * ( N + 2 ) ) + ( j - 1 ) ] );
 }
 
-void save_gnuplot(double *M, const int N, const int rank, const int wsz, const int* counts, const int* displs) {
+void save_gnuplot(double *M, const int N, const int rank, const int wsz, const int* counts, const int* offset) {
     const double h = 0.1;
     MPI_File file;
     MPI_Status status;
     // open shared file
     MPI_File_open(MPI_COMM_WORLD, "solution.dat", MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
-    // calculate offset for each process
-    int num_elements = counts[rank] * N;
+    int boh = (rank == 0 || rank == wsz - 1) ? counts[rank] + 1 : counts[rank];
+    int num_elements = boh * N;
     int bufsize = num_elements * 50; // estimate size of buffer
     char *buf = (char *) malloc( bufsize );
     int index = 0;
-    for (int i = 0; i < counts[rank]; i++) {
+    for (int i = (rank == 0 ? 0 : 1); i < (rank == 0 ? boh : boh + 1); i++) {
         for (int j = 0; j < N; j++) {
-            int row = i + displs[rank];
+            int row = i + offset[rank];
             index += sprintf(&buf[index], "%f\t%f\t%f\n", h * j, -h * row, M[i * N + j]);
         }
     }
@@ -110,7 +110,7 @@ void printCalls(const int wsz, const int rank, const int N, const int* rows, dou
   // Print in order
   if (rank == 0) {
       yellow(); printf("Rank %d:\n", rank); reset();
-      printMatrix(matrix, rows[rank] + 1, N + 2);
+      printMatrix(matrix, wsz == 1 ? rows[rank] + 2 : rows[rank] + 1, N + 2);
       for (int count = 1; count < wsz; count++) {
           int n_rows = (count == wsz - 1) ? rows[count] + 1 : rows[count];
           MPI_Recv(matrix + N + 2, n_rows * (N + 2), MPI_DOUBLE, count, count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
