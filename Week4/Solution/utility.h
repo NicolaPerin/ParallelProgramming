@@ -5,13 +5,19 @@
 #include <sys/time.h>
 #include <mpi.h>
 
+#ifdef ACC
+#include <openacc.h>
+#endif
+
 void reset( void ); void red( void ); void green( void ); void yellow( void );
 
 void save_gnuplot(double *, const int, const int, const int, const int*, const int*); // save matrix to file
 
 void exchangeRows(double*, const int*, const int, const int, const int, const int); // MPI_Sendrecv()
 
-void evolve( const double*, double*, const int*, const int, const int); // evolve Jacobi
+void evolve(const double*, double*, const int*, const int, const int); // evolve Jacobi
+
+void Jacobi(double*, double*, const int*, const int, const int, const int, const int, double);
 
 void initCounts(const int, const int, const int, int*, int*); // determine nr of rows and offset
 
