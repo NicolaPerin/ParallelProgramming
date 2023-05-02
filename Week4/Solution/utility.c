@@ -11,7 +11,6 @@ void green() { printf(GREEN); }
 void yellow() { printf(YELLOW); }
 
 void evolve( const double* matrix, double* matrix_new, const int* rows, const int rank, const int N) {
-  //This will be a row dominant program.
   for (int i = 1 ; i <= rows[rank]; i++)
     for (int j = 1; j <= N; j++)
       matrix_new[ ( i * ( N + 2 ) ) + j ] = ( 0.25 ) *
@@ -19,6 +18,65 @@ void evolve( const double* matrix, double* matrix_new, const int* rows, const in
           matrix[ ( i * ( N + 2 ) ) + ( j + 1 ) ] +
           matrix[ ( ( i + 1 ) * ( N + 2 ) ) + j ] +
           matrix[ ( i * ( N + 2 ) ) + ( j - 1 ) ] );
+}
+
+void Jacobi(double* matrix, double* matrix_new, const int* rows, const int rank, const int wsz,
+            const int N, const int iterations, double t_evolve) {
+
+  // Exchange ghost rows
+  int above = (rank == 0) ? MPI_PROC_NULL : rank - 1; // First process doesn't send its upper row to anybody
+  int below = (rank == wsz - 1) ? MPI_PROC_NULL : rank + 1; // Last process doesn't sent its lower row to anybody
+
+#ifdef ACC // OpenACC stuff
+  int nelems = (rows[rank] + 2) * (N + 2);
+
+  const acc_device_t devtype = acc_get_device_type();
+  const int num_devs = acc_get_num_devices(devtype);
+  acc_set_device_num(rank % num_devs, devtype);
+  acc_init(devtype);
+
+  #pragma acc enter data copyin(matrix[:nelems]) create (matrix_new[:nelems])
+  int start = (rows[rank] + 1) * (N + 2); // Why do I have to do this lol
+#endif
+
+  double t_evolve_start, t_evolve_end;
+
+  for (int it = 0; it < iterations; it++) {
+    exchangeRows(matrix, rows, N, rank, above, below);
+    t_evolve_start = MPI_Wtime(); // start computation timer
+
+#ifdef ACC // Update the ghost rows on the device; parallelize the loop
+    #pragma acc update device(matrix[0 : N + 2], matrix[start : N + 2])
+    #pragma acc parallel loop collapse(2) present(matrix[:nelems], matrix_new[:nelems])
+#endif
+
+    for (int i = 1 ; i <= rows[rank]; i++)
+      for (int j = 1; j <= N; j++)
+        matrix_new[ ( i * ( N + 2 ) ) + j ] = ( 0.25 ) *
+          ( matrix[ ( ( i - 1 ) * ( N + 2 ) ) + j ] +
+            matrix[ ( i * ( N + 2 ) ) + ( j + 1 ) ] +
+            matrix[ ( ( i + 1 ) * ( N + 2 ) ) + j ] +
+            matrix[ ( i * ( N + 2 ) ) + ( j - 1 ) ] );
+
+#ifdef ACC // Boh, for some reason swapping the pointers doesn't work
+    #pragma acc parallel loop collapse(2) present(matrix[:nelems], matrix_new[:nelems])
+    for (int i = 1; i <= rows[rank]; i++)
+      for (int j = 1; j <= N; j++)
+        matrix[i * N + j] = matrix_new[i * N + j];
+#else // When using cpu we can swap the pointers
+    double *restrict tmp_matrix;
+    tmp_matrix = matrix;
+    matrix = matrix_new;
+    matrix_new = tmp_matrix;
+#endif
+
+    t_evolve_end = MPI_Wtime();
+    t_evolve += t_evolve_end - t_evolve_start;
+  }
+
+#ifdef ACC // Copy matrix back to host or swap the pointers
+  #pragma acc exit data copyout(matrix[:nelems])
+#endif
 }
 
 void save_gnuplot(double *M, const int N, const int rank, const int wsz, const int* counts, const int* offset) {
