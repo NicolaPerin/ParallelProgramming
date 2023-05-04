@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   initCounts(n_loc, wsz, rest, rows, offset);
 
-  if (rank == 0) {
+  if (print && rank == 0) {
     printf("N (int): %d\nN (ext): %d\nn_loc: %d\nrest: %d\n", N, N + 2, n_loc, rest);
     printf("rows, offset\n");
     for (int i = 0; i < wsz; i++) printf("%d %d\n", rows[i], offset[i]);
