@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix); // Send to process zero to be printed
-  if (rank == 0) printf("\n-------------------------------------\n");
+  if (print && rank == 0) printf("\n-------------------------------------\n");
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix_new); // Send to process zero to be printed
 
   free(matrix);
