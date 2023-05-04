@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
     printf("rows, offset\n");
     for (int i = 0; i < wsz; i++) printf("%d %d\n", rows[i], offset[i]);
     printf("number of iterations = %d\n", iterations);
-    // printf("element for checking = Mat[%d,%d]\n",row_peek, col_peek);
   }
 
   // Allocation includes space for ghost rows
@@ -47,7 +46,7 @@ int main(int argc, char* argv[]) {
 
   t_start = MPI_Wtime(); // start algorithm
 
-  Jacobi(matrix, matrix_new, rows, rank, wsz, N, iterations, t_evolve); // Simulation
+  Jacobi(matrix, matrix_new, rows, rank, wsz, N, iterations, &t_evolve); // Simulation
 
   MPI_Barrier(MPI_COMM_WORLD);
   t_end = MPI_Wtime();
@@ -62,13 +61,20 @@ int main(int argc, char* argv[]) {
     printf("\nComputation time: %f s\n", t_evolve);
     printf("Communication time: %f seconds\n", t_elapsed - t_evolve);
     printf("Writing time: %f s\n", t_end - t_start);
+#ifdef ACC
+    FILE *fp = fopen("ACC_scalability.txt", "a");
+#else
+    FILE *fp = fopen("MPI_scalability.txt", "a");
+#endif
+    fprintf(fp, "%d %d %d %g %g %g\n", N + 2, wsz, iterations, t_evolve, t_elapsed - t_evolve, t_end - t_start);
+    fclose(fp);
   }
 
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix); // Send to process zero to be printed
+  if (rank == 0) printf("\n-------------------------------------\n");
+  if (print && N < 50) printCalls(wsz, rank, N, rows, matrix_new); // Send to process zero to be printed
 
-#ifndef ACC
   free(matrix);
-#endif
   free(matrix_new);
 
   MPI_Finalize();
