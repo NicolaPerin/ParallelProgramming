@@ -35,4 +35,3 @@ To do this, you can use
    :alt: Frequencies
    :scale:  100%
    :align: middle
-
