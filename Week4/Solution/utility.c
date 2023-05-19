@@ -4,13 +4,15 @@
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
 #define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
 
 void reset() { printf(RESET); }
 void red() { printf(RED); }
 void green() { printf(GREEN); }
 void yellow() { printf(YELLOW); }
+void blue() { printf(BLUE); }
 
-void evolve(double* matrix, double* matrix_new, const size_t* rows, const size_t rank, const size_t N, const size_t nelems) {
+void evolve(double* matrix, double* matrix_new, const int* rows, const int rank, const int N, const int nelems) {
 #ifdef ACC
   #pragma acc parallel loop collapse(2) present(matrix[:nelems], matrix_new[:nelems])
 #endif
@@ -23,14 +25,14 @@ void evolve(double* matrix, double* matrix_new, const size_t* rows, const size_t
           matrix[ ( i * ( N + 2 ) ) + ( j - 1 ) ] );
 }
 
-void Jacobi(double* matrix, double* matrix_new, const size_t* rows, const size_t rank, const size_t wsz,
-            const size_t N, const size_t iterations, double* t_evolve) {
+void Jacobi(double* matrix, double* matrix_new, const int* rows, const int rank, const int wsz,
+            const int N, const int iterations, double* t_evolve) {
 
   // Who are my neighbours
-  size_t above = (rank == 0) ? MPI_PROC_NULL : rank - 1; // First process doesn't send its upper row to anybody
-  size_t below = (rank == wsz - 1) ? MPI_PROC_NULL : rank + 1; // Last process doesn't sent its lower row to anybody
+  int above = (rank == 0) ? MPI_PROC_NULL : rank - 1; // First process doesn't send its upper row to anybody
+  int below = (rank == wsz - 1) ? MPI_PROC_NULL : rank + 1; // Last process doesn't sent its lower row to anybody
 
-  size_t nelems = (rows[rank] + 2) * (N + 2); // Number of elements of the grid, including ghost rows
+  int nelems = (rows[rank] + 2) * (N + 2); // Number of elements of the grid, including ghost rows
 
 #ifdef ACC // OpenACC stuff
 
@@ -40,7 +42,7 @@ void Jacobi(double* matrix, double* matrix_new, const size_t* rows, const size_t
   acc_init(devtype);
 
   #pragma acc enter data copyin(matrix[:nelems], matrix_new[:nelems])
-  size_t start = (rows[rank] + 1) * (N + 2); // Why do I have to do this
+  int start = (rows[rank] + 1) * (N + 2); // Why do I have to do this
 #endif
 
   double t_evolve_start, t_evolve_end;
@@ -76,14 +78,14 @@ void Jacobi(double* matrix, double* matrix_new, const size_t* rows, const size_t
 #endif
 }
 
-void initCounts(const size_t n_loc, const size_t wsz, const size_t rest, size_t* rows, size_t* offset) {
+void initCounts(const int n_loc, const int wsz, const int rest, int* rows, int* offset) {
   for (int i = 0; i < wsz; i++) rows[i] = (i < rest) ? n_loc + 1 : n_loc; // first processes get the remainder
   offset[0] = 0;
   for (int i = 1; i < wsz; i++) offset[i] = offset[i-1] + rows[i-1];
 }
 
-void initMatrix(const size_t rank, const size_t wsz, const size_t N,
-                const size_t* rows, const size_t* offset, double* matrix) {
+void initMatrix(const int rank, const int wsz, const int N,
+                const int* rows, const int* offset, double* matrix) {
   memset( matrix, 0, (rows[rank] + 2) * (N + 2) * sizeof(double) ); // set to zero to check for bugs later
   // fill initial values
   for (int i = 1; i <= rows[rank]; i++) // not the first row
@@ -100,7 +102,7 @@ void initMatrix(const size_t rank, const size_t wsz, const size_t N,
   }
 }
 
-void exchangeRows(double* matrix, const size_t* rows, const size_t N, const size_t rank, const size_t above, const size_t below) {
+void exchangeRows(double* matrix, const int* rows, const int N, const int rank, const int above, const int below) {
     // Exchange upper row
     MPI_Sendrecv(matrix + N + 2, N + 2, // Send the first (actual) row (the second)
                  MPI_DOUBLE, above, 0, // to the process above
@@ -115,60 +117,111 @@ void exchangeRows(double* matrix, const size_t* rows, const size_t N, const size
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 }
 
-void printMatrix(const double* M, const size_t rows, const size_t cols) {
-  for (int i = 0; i < rows; i++ ) {
-      for (int j = 0; j < cols; j++ ) {
-          fprintf( stdout, "%.3g ", M[i*cols + j] );
-      }
-      fprintf( stdout, "\n");
-  }
+void hsvToRgb(float h, float s, float v, int *r, int *g, int *b) {
+    float f = h / 60 - floor(h / 60);
+    float p = v * (1 - s);
+    float q = v * (1 - f * s);
+    float t = v * (1 - (1 - f) * s);
+    if (h < 60) {
+        *r = (int) (v * 255); *g = (int) (t * 255); *b = (int) (p * 255);
+    } else if (h < 120) {
+        *r = (int) (q * 255); *g = (int) (v * 255); *b = (int) (p * 255);
+    } else if (h < 180) {
+        *r = (int) (p * 255); *g = (int) (v * 255); *b = (int) (t * 255);
+    } else if (h < 240) {
+        *r = (int) (p * 255); *g = (int) (q * 255); *b = (int) (v * 255);
+    } else if (h < 300) {
+        *r = (int) (t * 255); *g = (int) (p * 255); *b = (int) (v * 255);
+    } else {
+        *r = (int) (v * 255); *g = (int) (p * 255); *b = (int) (q * 255);
+    }
 }
 
-// with ghost rows
-void printCalls(const size_t wsz, const size_t rank, const size_t N, const size_t* rows, double* matrix) {
+void getColor(int value, int min, int max, int *r, int *g, int *b) {
+    float ratio = (float)(value - min) / (max - min);
+    float hue = 240 - ratio * 240;
+    hsvToRgb(hue, 1.0, 1.0, r, g, b);
+}
+
+void printMatrix(const double* M, const int rows, const int cols, const int rank, const int wsz) {
+  int r, g, b;
+  if (!rank) {
+    for (int j = 0; j < cols; j++ ) {
+      getColor(M[j], 0, 100, &r, &g, &b);
+      printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[j], RESET);
+    }
+  } else for (int j = 0; j < cols; j++ ) printf("%.3g ", M[j]);
+  reset();
+  printf("\n");
+  for (int i = 1; i < rows - 1; i++ ) {
+      for (int j = 0; j < cols; j++ ) {
+          getColor(M[i*cols + j], 0, 100, &r, &g, &b);
+          printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[i*cols + j], RESET);
+      }
+      printf("\n");
+  }
+  if (rank == wsz - 1) {
+    for (int j = 0; j < cols; j++ ) {
+      getColor(M[(rows - 1)*cols + j], 0, 100, &r, &g, &b);
+      printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[(rows - 1)*cols + j], RESET);
+    }
+  } else for (int j = 0; j < cols; j++ ) printf("%.3g ", M[(rows - 1)*cols + j]);
+  reset();
+  printf("\n");
+}
+
+// print with ghost rows
+void printCalls(const int wsz, const int rank, const int N, const int* rows, double* matrix) {
   // Print in order
   if (rank == 0) {
       yellow(); printf("Rank %d:\n", rank); reset();
-      printMatrix(matrix, rows[rank] + 2, N + 2);
+      printMatrix(matrix, rows[rank] + 2, N + 2, rank, wsz);
       for (int count = 1; count < wsz; count++) {
           MPI_Recv(matrix, (rows[count] + 2) * (N + 2), MPI_DOUBLE, count, count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
           yellow(); printf("Rank %d:\n", count); reset();
-          printMatrix(matrix, rows[count] + 2, N + 2);
+          printMatrix(matrix, rows[count] + 2, N + 2, count, wsz);
       }
   } else MPI_Send(matrix, (rows[rank] + 2) * (N + 2), MPI_DOUBLE, 0, rank, MPI_COMM_WORLD);
 }
 
-void save_gnuplot(double *M, size_t N, size_t *rows, size_t rank, size_t wsz) {
+void save_gnuplot(const double* M, const size_t N, int *rows, const int rank, const int wsz) {
     size_t i, j;
     const double h = 0.1;
+    int row_sum;
     MPI_File file;
-    MPI_Offset offset;
-    size_t displacement[wsz];
-    size_t sum = 0;
-    size_t data_size = rows[rank] * (N + 2) * 3;
-    double data[data_size];
+    MPI_Offset start_write;
 
-    for (i = 0; i < wsz; ++i) {
-        displacement[i] = sum;
-        sum += rows[i];
-    }
+    if (rank == 0) rows[rank] += 1;
+    MPI_Barrier( MPI_COMM_WORLD );
+
+    MPI_Scan(rows + rank, &row_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    start_write = (row_sum - rows[rank]) * (N + 2) * 3 * sizeof(double);
+
+    MPI_Barrier( MPI_COMM_WORLD );
+    if (rank == 0) rows[rank] -= 1;
+
+    double data[3];
+    int* offset = (int*) malloc (wsz * sizeof(int));
+    offset[0] = 0;
+    for (i = 1; i < wsz; i++) offset[i] = offset[i-1] + rows[i-1];
 
     MPI_File_open(MPI_COMM_WORLD, "solution.dat", MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
 
-    // The first process has to write also its upper ghost rows and the last has to write its lower ghost row
-    // The processes in the middle do not write their ghost rows
-    size_t n_rows = (rank == 0 || rank == wsz - 1) ? rows[rank] + 1 : rows[rank];
-    // The first process writes from the beginning, the others from the second row
-    for (i = (rank == 0 ? 0 : 1); i < n_rows; i++) {
-        for (j = 0; j < N + 2; j++) {
-            data[(i * (N + 2) + j) * 3] = h * j;
-            data[(i * (N + 2) + j) * 3 + 1] = -h * (i + displacement[rank]);
-            data[(i * (N + 2) + j) * 3 + 2] = M[(i * (N + 2)) + j];
+    int start = (rank == 0) ? 0 : 1; // First process writes also its upper ghost row
+    int end = (rank == wsz - 1) ? rows[rank] + 1 : rows[rank]; // Last process writes also its lower ghost row
+
+    printf("rank %d start %d end %d\n", rank, start, end);
+
+    for (i = start; i <= end; ++i) {
+        printf("OK %d\n", i + offset[rank]);
+        for (j = 0; j < N + 2; ++j) {
+            data[0] = h * j;
+            data[1] = -h * (i + offset[rank]);
+            data[2] = M[(i * (N + 2)) + j];
+            MPI_File_write_at_all(file, start_write, data, 3, MPI_DOUBLE, MPI_STATUS_IGNORE);
+            start_write += 3 * sizeof(double);
         }
     }
-
-    offset = displacement[rank] * (N + 2) * sizeof(data[0]) * 3;
-    MPI_File_write_at_all(file, offset, data, data_size, MPI_DOUBLE, MPI_STATUS_IGNORE);
 
     MPI_File_close(&file);
 }
