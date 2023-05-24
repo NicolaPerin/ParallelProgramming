@@ -9,10 +9,11 @@ int main(int argc, char* argv[]) {
 
   double t_start, t_end, t_elapsed, t_evolve = 0.0; // timing variables
   double *restrict matrix, *restrict matrix_new;
-  int N = 0, iterations = 0, print = 0;
+  size_t N = 0;
+  int iterations = 0, print = 0;
 
   // check on input parameters
-  if(argc != 4) {
+  if (argc != 4) {
     if (rank == 0) {
       red(); printf("\nWrong number of arguments.\nUsage: mpirun -np <number of processes> jacobi.x <dim> <iterations> <print>\n"); reset();
     }
@@ -23,8 +24,16 @@ int main(int argc, char* argv[]) {
   iterations = atoi(argv[2]);
   print = atoi(argv[3]); // 0 doesn't print but writes to file
 
-  int n_loc = N / wsz;
-  int rest = N % wsz;
+  // Check on grid size vs number of processes
+  if (wsz > N) {
+    if (rank == 0) {
+      red(); printf("The number of MPI processes (%d) is greater than the number of rows of the matrix (%d)\n", wsz, N); reset();
+    }
+    return 1;
+  }
+
+  size_t n_loc = N / wsz;
+  size_t rest = N % wsz;
   int* rows = (int *) malloc( wsz * sizeof(int) ); // N° of actual rows
   int* offset = (int *) malloc( wsz * sizeof(int) ); // For initialization
 
@@ -38,8 +47,8 @@ int main(int argc, char* argv[]) {
   }
 
   // Allocation includes space for ghost rows
-  matrix = (double*)malloc( (rows[rank] + 2) * (N + 2) * sizeof(double) );
-  matrix_new = (double*)malloc( (rows[rank] + 2) * (N + 2) * sizeof(double) );
+  matrix = (double*) malloc ((rows[rank] + 2) * (N + 2) * sizeof(double) );
+  matrix_new = (double*) malloc ((rows[rank] + 2) * (N + 2) * sizeof(double) );
 
   initMatrix(rank, wsz, N, rows, offset, matrix); // Initial conditions
   initMatrix(rank, wsz, N, rows, offset, matrix_new);
@@ -47,14 +56,14 @@ int main(int argc, char* argv[]) {
   t_start = MPI_Wtime();
 
   Jacobi(matrix, matrix_new, rows, rank, wsz, N, iterations, &t_evolve); // Simulation
-  if (print && rank == 0) { green(); printf("Simulation ok!\n"); reset(); }
+  if (rank == 0) { green(); printf("Simulation ok!\n"); reset(); }
 
   MPI_Barrier(MPI_COMM_WORLD);
   t_end = MPI_Wtime();
   t_elapsed = t_end - t_start;
 
   t_start = MPI_Wtime();
-  if (!print) save_gnuplot(matrix, N, rows, rank, wsz);
+  if (!print) writeCalls(wsz, rank, N, rows, matrix); // Write to file in order
   MPI_Barrier(MPI_COMM_WORLD);
   t_end = MPI_Wtime();
 
@@ -69,12 +78,12 @@ int main(int argc, char* argv[]) {
 #else
     FILE *fp = fopen("MPI_scalability.txt", "a");
 #endif
-    fprintf(fp, "%d %d %d %g %g %g\n", N + 2, wsz, iterations, t_evolve, t_elapsed - t_evolve, t_end - t_start);
+    fprintf(fp, "%d %d %d %g %g %g\n", N + 2, wsz, iterations, t_evolve, t_elapsed - t_evolve);
     fclose(fp);
   }
 
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix); // Send to process zero to be printed
-  if (print && rank == 0) { yellow(); printf("\n-------------------------------------\n"); reset(); }
+  if (print && rank == 0) printf("\n-------------------------------------\n");
   if (print && N < 50) printCalls(wsz, rank, N, rows, matrix_new); // Send to process zero to be printed
 
   free(matrix);
