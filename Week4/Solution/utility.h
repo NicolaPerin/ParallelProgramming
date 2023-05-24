@@ -12,15 +12,17 @@
 
 void reset( void ); void red( void ); void green( void ); void yellow( void ); void blue( void ); // Colors
 
-void save_gnuplot(const double*, const size_t, int*, const int, const int); // Save matrix to file
+//void save_gnuplot1(const double*, const size_t, int*, const int, const int); // Parallel I/O attempt (not working)
 
-void exchangeRows(double*, const int*, const int, const int, const int, const int); // MPI_Sendrecv()
+void save_gnuplot(const double*, const int, const int, const int, FILE*); // Write to file
 
-void evolve(double*, double*, const int*, const int, const int, const int); // Grid update
+void exchangeRows(double*, const int*, const size_t, const int, const int, const int); // MPI_Sendrecv()
 
-void Jacobi(double*, double*, const int*, const int, const int, const int, const int, double*); // Simulation
+void evolve(double*, double*, const int*, const int, const size_t, const size_t); // Grid update
 
-void initCounts(const int, const int, const int, int*, int*); // Determine nr of rows and offset
+void Jacobi(double*, double*, const int*, const int, const int, const size_t, const int, double*); // Simulation
+
+void initCounts(const size_t, const int, const size_t, int*, int*); // Determine nr of rows and offset
 
 void initMatrix(const int, const int, const int, const int*, const int*, double*); // Initial conditions
 
@@ -30,4 +32,6 @@ void getColor(int, int, int, int*, int*, int*); // Determine the rgb values for 
 
 void printMatrix(const double*, const int, const int, const int, const int); // Print a matrix
 
-void printCalls(const int, const int, const int, const int*, double*); // Send to rank 0 in order and write to terminal
+void printCalls(const int, const int, const size_t, const int*, double*); // Send to rank 0 in order and print to terminal
+
+void writeCalls(const int, const int, const size_t, const int*, double*); // Send to rank 0 in orfer and write to file
