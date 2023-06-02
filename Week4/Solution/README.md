@@ -1,5 +1,5 @@
 Folder for my parallel implementation of the program (in progress)
 
-  - Distribute the problem with MPI: done with parallel writing to file also
-  - Offload to GPUs using OpenACC: to do
-  - Scalability study: to do
+  - Distribute the problem with MPI: done with but no MPI I/O
+  - Offload to GPUs using OpenACC: done
+  - Scalability study: done except the plots
