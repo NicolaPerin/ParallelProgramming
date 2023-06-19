@@ -1,33 +1,21 @@
-# inputs for the executables
+CC := mpicc
+CFLAGS := -Wall -O3
 
-dim = 10
-it  = 100
-r = 3
-c = 3
+SRC := Obi_wan_Jacobi.c utility.c
+OBJ := $(SRC:.c=.o)
 
-CC=mpicc
-CFLAGS=-O3 -Wall
+# Default target
+all: $(OBJ)
+	$(CC) $(CFLAGS) -o Obi_wan_Jacobi $(OBJ)
 
-TARGET=jacobi.x
+# Target for compiling without OpenACC
+$(OBJ): %.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-SOURCES=Obi_Wan_Jacobi.c utility.c
-OBJECTS=$(SOURCES:.c=.o)
+# Target for compiling with OpenACC
+acc: CFLAGS += -acc -Minfo=accel -ta=tesla
+acc: all
 
-all: $(TARGET)
-
-run: clean all
-	./$(EXE) $(dim) $(it) $(r) $(c)
-
-%.o: %.c
-		$(CC) $(CFLAGS) -c $< -o $@
-
-$(TARGET): $(OBJECTS)
-		$(CC) -o $(TARGET) $(OBJECTS)
-
+# Clean target
 clean:
-	rm -f $(OBJECTS) $(TARGET) solution.dat 
-
-plot:
-	@gnuplot -p plot.plt
-
-.PHONY: clean plot all
+	rm -f Obi_wan_Jacobi $(OBJ)
