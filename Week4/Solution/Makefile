@@ -13,7 +13,7 @@ $(OBJ): %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Target for compiling with OpenACC
-acc: CFLAGS += -acc -Minfo=accel -ta=tesla
+acc: CFLAGS += -DOPENACC -acc -Minfo=accel -ta=tesla
 acc: all
 
 # Clean target
