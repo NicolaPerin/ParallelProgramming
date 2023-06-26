@@ -1,21 +1,22 @@
-CC := mpicc
-CFLAGS := -Wall -O3
+CC = mpicc
 
-SRC := Obi_wan_Jacobi.c utility.c
-OBJ := $(SRC:.c=.o)
+CFLAGS = -Wall -Wextra -O3
 
-# Default target
-all: $(OBJ)
-	$(CC) $(CFLAGS) -o Obi_wan_Jacobi $(OBJ)
+SOURCES = Obi_Wan_Jacobi.c utility.c
 
-# Target for compiling without OpenACC
-$(OBJ): %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+OBJECTS = $(SOURCES:.c=.o)
 
-# Target for compiling with OpenACC
-acc: CFLAGS += -DACC -acc -Minfo=accel -ta=tesla
+HEADERS = utility.h
+
+all: $(OBJECTS)
+        $(CC) $(CFLAGS) -o Obi_Wan_Jacobi $(OBJECTS)
+
+# OpenACC target
+acc: CFLAGS += -DACC -acc -Minfo=accel -fast -ta=tesla
 acc: all
 
-# Clean target
+plot:
+        @gnuplot -p plot.plt
+
 clean:
-	rm -f Obi_wan_Jacobi $(OBJ)
+        rm -f $(OBJECTS) Obi_Wan_Jacobi
