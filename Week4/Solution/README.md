@@ -1,5 +1,5 @@
-Folder for my parallel implementation of the program (in progress)
+## Distributed and accelerated version of the Jacobi iteration
 
-  - Distribute the problem with MPI: done but no MPI I/O
-  - Offload to GPUs using OpenACC: done
-  - Scalability study: done except the plots
+We perform a 1 dimensional domain decomposition of a square grid, with no periodic boundary conditions. Each chunk of the grid is then offloaded to a gpu via OpenACC. We use MPI_Sendrecv(), #pragma acc update host() and #pragma acc update device() to exchange the ghost rows between gpus at each iteration.
+
+The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
