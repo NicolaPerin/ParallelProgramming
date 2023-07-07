@@ -18,3 +18,4 @@ Here I show the scalability for 1000 iterations on the largest grid I could allo
 <img src="Plots/acc_64000.png" alt="Image Description" width="600" height="450">
 
 ### Comparison
+<img src="Plots/Comparison_64000.png" alt="Image Description" width="600" height="450">
