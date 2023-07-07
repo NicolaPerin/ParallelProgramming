@@ -4,3 +4,6 @@ The first goal is to multiply two matrices A and B that are distributed along th
 We also take care of the possible remainders when the number of processes is not a divisor of the size of the matrix. To do so, the datatype has to be recreated at each iteration of the loop over the number of column blocks.
 
 The second goal is to replace the naive algorithm with a call to either the OpenBlas cblas_dgemm() (cpu) or the cuBLAS cublasDgemm() (gpu) libraries. We then perform a scalability study on 1, 2, 4 and 8 nodes of the Marconi100 cluster and also a comparison between the non-accelerated and the accelerated version of the code.
+
+
+To simplify the debugging process, A is initialized with increasing integers numbers and B is the identity matrix so that C = A.
