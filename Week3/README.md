@@ -7,3 +7,10 @@ The second goal is to replace the naive algorithm with a call to either the Open
 
 
 To simplify the debugging process, A is initialized with increasing integers numbers and B is the identity matrix so that C = A.
+
+To compile the program on the Marconi100 cluster we have to load the following modules:
+  - spectrum_mpi/10.4.0--binary
+  - openblas/0.3.9--gnu--8.4.0
+  - cuda/11.0
+
+and then run either make or make
