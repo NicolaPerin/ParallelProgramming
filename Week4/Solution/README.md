@@ -4,6 +4,8 @@ I performed a 1 dimensional domain decomposition of a square grid, with no perio
 
 On the host I can avoid having to copy the new grid to the old by swapping the pointers at each iteration. On the other hand this does not work with OpenACC, so I used a different workaround: at each iteration I switch the arguments matrix and matrix_new in the function in which the evolution of the grid is performed (check utility.c).
 
+The grid is saved to file only at the end; I did not exploit the parallel file system so the processes take turns in sending their chunk of the grid to the first one which saves the grid to a binary file.
+
 The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
 
 ## Benchmarks
@@ -14,3 +16,5 @@ Here I show the scalability for 1000 iterations on the largest grid I could allo
 
 ### GPU scalability
 <img src="Plots/acc_64000.png" alt="Image Description" width="600" height="450">
+
+### Comparison
