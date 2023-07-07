@@ -15,4 +15,4 @@ To compile the program on the Marconi100 cluster we have to load the following m
 
 and then run either make dgemm=1 or make gpu=1
 
-To run the program use mpirun prod.x <size> <print> where size is the number of rows of the matrices and print must be either 0 or 1 depending on whether you want to print the result to terminal or not. You also may want to specify the number of MPI processes adding -np <some number> to mpirun.
+To run the program use mpirun prod.x $<size>$ $<print>$ where size is the number of rows of the matrices and print must be either 0 or 1 depending on whether you want to print the result to terminal or not. You also may want to specify the number of MPI processes adding -np <some number> to mpirun.
