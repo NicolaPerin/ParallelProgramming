@@ -27,4 +27,4 @@ The following plots show the elapsed time (computation and communication) for mu
 <img src="Plots/CuDgemm50k.png" alt="Image Description" width="600" height="400">
 
 ### Comparison
-<img src="Plots/Comparison.png" alt="Image Description" width="600" height="400">
+<img src="Plots/Comparison.png" alt="Image Description" width="600" height="500">
