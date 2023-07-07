@@ -13,4 +13,6 @@ To compile the program on the Marconi100 cluster we have to load the following m
   - openblas/0.3.9--gnu--8.4.0
   - cuda/11.0
 
-and then run either make or make
+and then run either make dgemm=1 or make gpu=1
+
+To run the program use mpirun 
