@@ -18,4 +18,12 @@ and then run either `make dgemm=1` or `make gpu=1`.
 To run the program use `mpirun prod.x size print`, where size is the number of rows of the matrices and print must be either 1 or 0 depending on whether you want to print the result to terminal or not. You also may want to specify the number of MPI processes with the -np option.
 
 ## Benchmarks
+The following plots show the elapsed time (computation and communication) for multiplying two square matrices of size 50000 x 50000.
+
+### CPU scalability
+<img src="Plots/Dgemm50k.png" alt="Image Description" width="600" height="400">
+
+### GPU scalability
 <img src="Plots/CuDgemm50k.png" alt="Image Description" width="600" height="400">
+
+### Comparison
