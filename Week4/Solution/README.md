@@ -6,4 +6,4 @@ On the host we can avoid having to copy the new grid to the old by swapping the 
 
 The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
 
-
+<img src="Plots/acc_64000.png" alt="Image Description" width="600" height="400">
