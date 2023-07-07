@@ -7,7 +7,7 @@ On the host I can avoid having to copy the new grid to the old by swapping the p
 The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
 
 ## Benchmarks
-Here I show the scalability for 1000 iterations on the largest grid I could allocate on the gpus of a single node of the cluster (4x NVIDIA Tesla V100 16Gb). For a correct comparison the size is the same on the non accelerated version benchmark even though the host memory is much larger (256Gb).
+Here I show the scalability for 1000 iterations on the largest grid I could allocate on the gpus of a single node of the cluster (4x NVIDIA Tesla V100 16Gb). For a correct comparison the size is the same on the non accelerated version benchmark even though the host memory is much larger (256Gb). The scalability for smaller sizes is much worse, especially on the gpus. You can find those plots in the Plots folder.
 
 ### CPU scalability
 <img src="Plots/mpi_64000.png" alt="Image Description" width="600" height="450">
