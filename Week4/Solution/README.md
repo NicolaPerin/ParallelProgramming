@@ -9,10 +9,13 @@ The grid is saved to file only at the end; I did not exploit the parallel file s
 The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
 
 ## Solution
+
 After 10000 iterations:
+
 <img src="Plots/plot_1k_10k.png" alt="Image Description" width="600" height="500">
 
 After 500000 iterations:
+
 <img src="Plots/jacobi_1k_500k.png" alt="Image Description" width="600" height="500">
 
 ## Benchmarks
