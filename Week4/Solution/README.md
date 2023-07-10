@@ -10,6 +10,8 @@ The goal is to compute the efficiency of the non-accelerated and accelerated dis
 
 ## Solution
 
+The following are the final snapshots for a grid of size 1000x10000 after 10k and 500k iterations:
+
 After 10000 iterations:
 
 <img src="Plots/plot_1k_10k.png" alt="Image Description" width="600" height="500">
