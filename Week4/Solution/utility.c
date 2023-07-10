@@ -146,26 +146,34 @@ void getColor(int value, int min, int max, int *r, int *g, int *b) {
 void printMatrix(const double* M, const int rows, const int cols, const int rank, const int wsz) {
   int r, g, b;
   if (!rank) {
-    for (int j = 0; j < cols; j++ ) {
+    for (int j = 0; j < cols; j++) {
       getColor(M[j], 0, 100, &r, &g, &b);
-      printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[j], RESET);
+      printf("\033[38;2;%d;%d;%dm%5.2f%s ", r, g, b, M[j], RESET);
     }
-  } else for (int j = 0; j < cols; j++ ) printf("%.3g ", M[j]);
+  } else {
+    for (int j = 0; j < cols; j++) {
+      printf("%5.2f ", M[j]);
+    }
+  }
   reset();
   printf("\n");
-  for (int i = 1; i < rows - 1; i++ ) {
-      for (int j = 0; j < cols; j++ ) {
-          getColor(M[i*cols + j], 0, 100, &r, &g, &b);
-          printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[i*cols + j], RESET);
-      }
-      printf("\n");
+  for (int i = 1; i < rows - 1; i++) {
+    for (int j = 0; j < cols; j++) {
+      getColor(M[i * cols + j], 0, 100, &r, &g, &b);
+      printf("\033[38;2;%d;%d;%dm%5.2f%s ", r, g, b, M[i * cols + j], RESET);
+    }
+    printf("\n");
   }
   if (rank == wsz - 1) {
-    for (int j = 0; j < cols; j++ ) {
-      getColor(M[(rows - 1)*cols + j], 0, 100, &r, &g, &b);
-      printf("\033[38;2;%d;%d;%dm%.3g%s ", r, g, b, M[(rows - 1)*cols + j], RESET);
+    for (int j = 0; j < cols; j++) {
+      getColor(M[(rows - 1) * cols + j], 0, 100, &r, &g, &b);
+      printf("\033[38;2;%d;%d;%dm%5.2f%s ", r, g, b, M[(rows - 1) * cols + j], RESET);
     }
-  } else for (int j = 0; j < cols; j++ ) printf("%.3g ", M[(rows - 1)*cols + j]);
+  } else {
+    for (int j = 0; j < cols; j++) {
+      printf("%5.2f ", M[(rows - 1) * cols + j]);
+    }
+  }
   reset();
   printf("\n");
 }
