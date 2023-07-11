@@ -16,8 +16,9 @@ The following animation shows the solution of the diffusion equation using a gri
 
 Here are reported the measured runtimes for the two versions of the code as well as the efficiency in every case, for a grid of size 512 x 512 x 1024:
 
-| Number of nodes | FFTW_MPI | | custom | |
-| -------------- | -------------- | -------------- | -------------- | -------------- | 
+| | FFTW_MPI | | custom | |
+| -------------- | -------------- | -------------- | -------------- | -------------- |
+| Number of nodes | runtime (s) | efficiency | runtime (s) | efficiency |
 | 1 | 1048.32 | 1.000 | 899.280 | 1.000 | 
 | 2 | 662.313 | 0.791 | 566.119 | 0.794 | 
 | 4 | 455.914 | 0.575 | 388.254 | 0.579 | 
