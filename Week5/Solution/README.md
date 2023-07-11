@@ -4,10 +4,17 @@ We distribute the data on the n1 direction among all the process, and perform a 
 To perform the FFT we use the `fftw_plan_many_dft()`, which allows to use only one call to perform the fft on a 2D or 1D plan. For both the 2D plan and the 1D plan, the data are considered contiguos.
 To send the data we create an MPI_Datatype, called column_block, which represents the matrix block that each process send and receive during the alltoall routine. The block will contain `n1_loc * n2_loc * n3` elements and, since we work in a row-major access, the next line is after `n2_loc * n3` elements. The advantages of this approach is that both before and after the reordering, the data are contiguos through a row-major access.
 
+The goal is to compare the runtime of the fftw-mpi library with the *manually* distributed code.
+
 ## Solution
 
+The following animation shows the solution of the diffusion equation using a grid of size 256 x 256 x 512
 ![Alt Text](animate.gif)
 
 ## Benchmarks
+
+The following graph shows the scalability comparison of the two versions of the code:
+
+<img src="Comparison_FFTW.png" alt="Image Description" width="600" height="500">
 
 
