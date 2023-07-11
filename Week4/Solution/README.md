@@ -14,11 +14,11 @@ The following are the final snapshots for a grid of size 1000x10000 after 10k an
 
 After 10000 iterations:
 
-<img src="Plots/plot_1k_10k.png" alt="Image Description" width="600" height="450">
+<img src="Plots/plot_1k_10k.png" alt="Image Description" width="800" height="600">
 
 After 500000 iterations:
 
-<img src="Plots/jacobi_1k_500k.png" alt="Image Description" width="600" height="450">
+<img src="Plots/jacobi_1k_500k.png" alt="Image Description" width="800" height="600">
 
 ## Benchmarks
 Here I show the scalability for 1000 iterations on the largest grid I could allocate on the gpus of a single node of the cluster (4x NVIDIA Tesla V100 16Gb). For a correct comparison the size is the same on the non accelerated version benchmark even though the host memory is much larger (256Gb). The scalability for smaller sizes is much worse, especially on the gpus. You can find those plots in the Plots folder.
