@@ -14,6 +14,14 @@ The following animation shows the solution of the diffusion equation using a gri
 
 ## Benchmarks
 
+Here are reported the measured runtimes for the two versions of the code as well as the efficiency in every case:
+
+| Column 1 Header | Column 2 Header | Column 3 Header |
+| -------------- | -------------- | -------------- |
+| Column 1 Value | Column 2 Value | Column 3 Value |
+| Column 1 Value | Column 2 Value | Column 3 Value |
+
+
 The following graph shows the scalability comparison of the two versions of the code:
 
 <img src="Comparison_FFTW.png" alt="Image Description" width="600" height="450">
