@@ -14,7 +14,7 @@ The following animation shows the solution of the diffusion equation using a gri
 
 ## Benchmarks
 
-Here are reported the measured runtimes for the two versions of the code as well as the efficiency in every case, for a grid of size 512 x 512 x 1024:
+Here are reported the measured runtimes for the two versions of the code as well as the efficiency in every case, for a grid of size 512 x 512 x 1024 and 100 time steps:
 
 | | FFTW_MPI | | custom | |
 | -------------- | -------------- | -------------- | -------------- | -------------- |
