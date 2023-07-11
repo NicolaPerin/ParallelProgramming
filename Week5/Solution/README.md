@@ -6,6 +6,7 @@ To send the data we create an MPI_Datatype, called column_block, which represent
 
 ## Solution
 
+![Alt Text](animate.gif)
 
 ## Benchmarks
 
