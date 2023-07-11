@@ -2,7 +2,7 @@ FFTW_INC = /m100_work/PROJECTS/spack/spack-0.14/install/linux-rhel7-power9le/gcc
 FFTW_LIB = /m100_work/PROJECTS/spack/spack-0.14/install/linux-rhel7-power9le/gcc-8.4.0/fftw-3.3.8-hwlrarpm6cvjlukhfdowwveb7g7oqwgc/lib
 
 LIBS = -L$(FFTW_LIB) -lfftw3_mpi -lfftw3 -lm
-EXE = fftw_mpi.x
+EXE = fftw.x
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
