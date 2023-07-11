@@ -1,23 +1,8 @@
-/* Assignement:
- * Here you have to modify the includes, the array sizes and the fftw calls, to use the fftw-mpi
- *
- * Regarding the fftw calls. here is the substitution 
- * fftw_plan_dft_3d -> fftw_mpi_plan_dft_3d
- * ftw_execute_dft  > fftw_mpi_execute_dft 
- * use fftw_mpi_local_size_3d for local size of the arrays
- * 
- * Created by G.P. Brandino, I. Girotto, R. Gebauer
- * Last revision: March 2016
- *
- */ 
-
 #include <stdbool.h>
 #include <string.h>
 #include "utilities.h"
 
-
 double seconds(){
-/* Return the second elapsed since Epoch (00:00:00 UTC, January 1, 1970) */
   struct timeval tmp;
   double sec;
   gettimeofday( &tmp, (struct timezone *)0 );
@@ -25,41 +10,19 @@ double seconds(){
   return sec;
 }
 
-/* 
- *  Index linearization is computed following row-major order.
- *  For more informtion see FFTW documentation:
- *  http://www.fftw.org/doc/Row_002dmajor-Format.html#Row_002dmajor-Format
- *
- */
 int index_f ( int i1, int i2, int i3, int n1, int n2, int n3){
 
   return n3*n2*i1 + n3*i2 + i3; 
 }
 
 void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm){
-  
-  /*
-   * Call to fftw_mpi_init is needed to initialize a parallel enviroment for the fftw_mpi
-   */
 
   fftw_mpi_init();
   fft->mpi_comm = comm;
 
-  /*
-   *  Allocate a distributed grid for complex FFT using aligned memory allocation
-   *  See details here:
-   *  http://www.fftw.org/fftw3_doc/Allocating-aligned-memory-in-Fortran.html#Allocating-aligned-memory-in-Fortran
-   *  HINT: the allocation size is given by fftw_mpi_local_size_3d (see also http://www.fftw.org/doc/MPI-Plan-Creation.html)
-   *
-   */
   fft->global_size_grid = n1 * n2 * n3;
   fft->local_size_grid = fftw_mpi_local_size_3d( n1, n2, n3, fft->mpi_comm, &fft->local_n1, &fft->local_n1_offset);
   fft->fftw_data = ( fftw_complex* ) fftw_malloc( fft->local_size_grid * sizeof( fftw_complex ) );
-
-  /*
-   * Create an FFTW plan for a distributed FFT grid
-   * Use fftw_mpi_plan_dft_3d: http://www.fftw.org/doc/MPI-Plan-Creation.html#MPI-Plan-Creation
-   */
 
   fft->fw_plan = fftw_mpi_plan_dft_3d( n1, n2, n3, fft->fftw_data, fft->fftw_data, fft->mpi_comm, FFTW_FORWARD, FFTW_ESTIMATE );
   fft->bw_plan = fftw_mpi_plan_dft_3d( n1, n2, n3, fft->fftw_data, fft->fftw_data, fft->mpi_comm, FFTW_BACKWARD, FFTW_ESTIMATE );
@@ -97,7 +60,6 @@ void fft_3d( fftw_mpi_handler* fft, double *data_direct, fftw_complex* data_rec,
     double fac;
     int i;
     
-    // Now distinguish in which direction the FFT is performed
     if( direct_to_reciprocal ){
      
       for(i = 0; i < fft->local_size_grid; i++){
