@@ -16,10 +16,12 @@ The following animation shows the solution of the diffusion equation using a gri
 
 Here are reported the measured runtimes for the two versions of the code as well as the efficiency in every case:
 
-| Column 1 Header | Column 2 Header | Column 3 Header |
+| Number of nodes | FFTW_MPI | custom |
 | -------------- | -------------- | -------------- |
-| Column 1 Value | Column 2 Value | Column 3 Value |
-| Column 1 Value | Column 2 Value | Column 3 Value |
+| 1 | 1048.32 | 899.280 |
+| 2 | 662.313 | 566.119 |
+| 4 | 455.914 | 388.254 |
+| 8 | 285.021 | 251.448 |
 
 
 The following graph shows the scalability comparison of the two versions of the code:
