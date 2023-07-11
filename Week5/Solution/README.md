@@ -6,6 +6,11 @@ To send the data we create an MPI_Datatype, called column_block, which represent
 
 The goal is to compare the runtime of the fftw-mpi library with the manually distributed code.
 
+To compile the program on the Marconi100 cluster we have to load the following modules (using *autoload*):
+  - fftw/3.3.8--spectrum_mpi--10.3.1--binary
+
+and then run `make`. To run the program use `mpirun fftw.x dt nstep n1 n2 n3`. To generate the plots run `make plot`.
+
 ## Solution
 
 The following animation shows the solution of the diffusion equation using a grid of size 256 x 256 x 512:
