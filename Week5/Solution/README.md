@@ -8,13 +8,14 @@ The goal is to compare the runtime of the fftw-mpi library with the *manually* d
 
 ## Solution
 
-The following animation shows the solution of the diffusion equation using a grid of size 256 x 256 x 512
+The following animation shows the solution of the diffusion equation using a grid of size 256 x 256 x 512:
+
 ![Alt Text](animate.gif)
 
 ## Benchmarks
 
 The following graph shows the scalability comparison of the two versions of the code:
 
-<img src="Comparison_FFTW.png" alt="Image Description" width="600" height="500">
+<img src="Comparison_FFTW.png" alt="Image Description" width="600" height="450">
 
 
