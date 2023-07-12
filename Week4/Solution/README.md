@@ -13,6 +13,7 @@ To compile and run the program you need to load the following modules:
   - hpc-sdk/2021--binary
 
 and then run either `make` or `make acc`. To run the program use mpirun Jacobi.x N it print, where N is the grid size (square), it is the number of iterations and print is either 0 or 1 depending on whether or not you want to print the grid to terminal. If the grid is printed to terminal it's not written to file and vice versa.
+To generate a png of the grid run `make plot`.
 
 ## Solution
 
