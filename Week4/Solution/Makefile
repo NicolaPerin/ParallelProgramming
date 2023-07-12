@@ -9,7 +9,7 @@ OBJECTS = $(SOURCES:.c=.o)
 HEADERS = utility.h
 
 all: $(OBJECTS)
-        $(CC) $(CFLAGS) -o Obi_Wan_Jacobi $(OBJECTS)
+        $(CC) $(CFLAGS) -o Jacobi.x $(OBJECTS)
 
 # OpenACC target
 acc: CFLAGS += -DACC -acc -Minfo=accel -fast -ta=tesla
@@ -19,4 +19,4 @@ plot:
         @gnuplot -p plot.plt
 
 clean:
-        rm -f $(OBJECTS) Obi_Wan_Jacobi
+        rm -f $(OBJECTS) Jacobi.x
