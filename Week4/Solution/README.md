@@ -8,9 +8,15 @@ The grid is saved to file only at the end; I did not exploit the parallel file s
 
 The goal is to compute the efficiency of the non-accelerated and accelerated distributed versions of the code, and compare the runtime in the two cases.
 
+To compile and run the program you need to load the following modules:
+  - spectrum_mpi/10.4.0--binary
+  - hpc-sdk/2021--binary
+
+and then run either `make` or `make acc`. To run the program use mpirun Jacobi.x N it print, where N is the grid size (square), it is the number of iterations and print is either 0 or 1 depending on whether or not you want to print the grid to terminal. If the grid is printed to terminal it's not written to file and vice versa.
+
 ## Solution
 
-The following are the final snapshots for a grid of size 1000x10000 after 10k and 500k iterations:
+The following are the final snapshots for a grid of size 1000x1000 after 10k and 500k iterations:
 
 After 10000 iterations:
 
